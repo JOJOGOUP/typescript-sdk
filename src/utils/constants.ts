@@ -3,7 +3,8 @@ import { FeeStructure } from '../types';
 
 export const PNG_TOKEN_SWAP_ID: PublicKey = new PublicKey('PSwapMdSai8tjrEXcxFeQth87xC4rRsa4VA5mhGhXkP');
 
-export const PNG_BONDING_ID: PublicKey = new PublicKey('PBoMUHZLyrAcd4foZRnEoSf2qDGE4tV1ByQWhpcHDGk');
+export const PNG_BONDING_ID: PublicKey = new PublicKey('BDz9iveGgFpeqXuveq3RkUHmo3kK19rBzUQUzcYrhRHj');
+export const PNG_VESTING_ID: PublicKey = new PublicKey('VTuZVbYbkTysDqaGM3wEE4pukXDT5Eexg6Rusv7QVEE');
 
 // staking program and config id
 export const PNG_STAKING_ID: PublicKey = new PublicKey('PSTKQuioNjJHQbBBBffCcL5aujgNbSJdAD8LsaYJU37');

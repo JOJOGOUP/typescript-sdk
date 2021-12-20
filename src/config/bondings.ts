@@ -1,8 +1,14 @@
 import { PublicKey } from '@solana/web3.js';
 
-export const mainnetBondings: PublicKey[] = [
+import { BondingConfig } from '../types';
+
+export const mainnetBondings: BondingConfig[] = [
 ];
 
-export const devnetBondings: PublicKey[] = [
-  new PublicKey('6iyQEv8eRkH88wrDwfqZ1XDakqfS7zBvwFuYH8F3s3s9')
+export const devnetBondings: BondingConfig[] = [
+  {
+    addr: new PublicKey('7TSG79QSWvhAc8NZAcvMZTgk1eWYDKeTsyXNRrKDxrH5'),
+    vestConfig: new PublicKey('8GZxgKPfqa5TtHghff6fjAKSCXeWcYAUu4qiU75rCDhf')
+  }
+
 ];

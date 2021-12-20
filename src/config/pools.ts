@@ -41,5 +41,14 @@ export const devnetPools: PoolConfig[] = [
   {
     pair: 'PNG_USDC',
     addr: new PublicKey('3HdXX7jhbq7EF2fpaB7iPt8J8N5MwTYii6FYhwySakg7')
+  },
+  // {
+  //   pair: 'USDC_LPB',
+  //   addr: new PublicKey('7my8yTTwpPh8s4V7cafxhvdm4uN2C9nxGkTFAS95E9VT')
+  // }
+
+  {
+    pair: 'LPB_USDC',
+    addr: new PublicKey('EvvZmbZSVvTdcwNH12177gBjEDeDYqGN2HiuAXW91uMX')
   }
 ];
