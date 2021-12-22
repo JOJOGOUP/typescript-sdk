@@ -1,7 +1,7 @@
 import type { Provider } from '@saberhq/solana-contrib';
 
-import { 
-  BondingConfig, 
+import {
+  BondingConfig,
   BondingInfo,
   VestConfigInfo
 } from '../../types';
@@ -56,7 +56,7 @@ export class Bonding {
 
   async getVestConfigInfo(): Promise<VestConfigInfo | null> {
     try {
-   
+
       const {
         vestMint,
         claimAllDuration,
@@ -133,7 +133,7 @@ export class Bonding {
 
     const duration = Math.floor(new Date().getTime() / 1000 - lastDecay);
     const decay = totalDebt.mul(new u64(duration)).div(new u64(decayFactor));
-   
+
     return decay.gt(totalDebt) ? totalDebt : decay;
   }
 
@@ -153,12 +153,12 @@ export class Bonding {
     } else {
       const { tokenADecimals, tokenBDecimals } = lpInfo;
 
-      const decimals = tokenADecimals + tokenBDecimals - assetMintInfo.decimals;
+      const decimals = tokenADecimals + tokenBDecimals - 2 * assetMintInfo.decimals;
       const tokenAAmount = tokenAHolderInfo?.amount || ZERO_U64;
       const tokenBAmount = tokenBHolderInfo?.amount || ZERO_U64;
 
       const kValue = tokenAAmount.mul(tokenBAmount).div(new u64(Math.pow(10, decimals)));
-    
+
       const totalValue = DecimalUtil.fromU64(kValue).sqrt().mul(2);
 
       return DecimalUtil.toU64(totalValue, assetMintInfo.decimals)
@@ -173,9 +173,7 @@ export class Bonding {
     const bondingInfo = await this.getBondingInfo();
     const { totalDebt, bondingSupply, controlVariable } = bondingInfo;
 
-    console.log('program totalDebt', totalDebt.toString());
-    console.log('program bondingSupply', bondingSupply.toString());
-    console.log('program controlVariable', controlVariable.toString());
+    console.log('program totalDebt=======', DecimalUtil.beautify(DecimalUtil.fromU64(totalDebt, 6)));
     const debtRatio =
       totalDebt
         .sub(this.decay(bondingInfo))
@@ -191,16 +189,13 @@ export class Bonding {
 
     const valuation = await this.valuation(bondingInfo, amount);
 
-    console.log('==== totalDebt =====', totalDebt.toNumber());
-    console.log('internal_val:', valuation.toNumber());
-    console.log('internal_price:', price.toString());
-
-    console.log('xPayOutx', (valuation.mul(new u64(100)).div(new u64(price))).toString())
-
     return valuation.mul(new u64(100)).div(new u64(price));
   }
 
-  async purchaseLPToken(amount: u64): Promise<TransactionEnvelope> {
+  async purchaseToken(amount: u64): Promise<TransactionEnvelope> {
+
+    const owner = this.program.provider.wallet?.publicKey;
+
     const bondingInfo = await this.getBondingInfo();
 
     const [bondingPda] = await PublicKey.findProgramAddress(
@@ -208,12 +203,6 @@ export class Bonding {
       this.program.programId
     );
 
-      console.log('bondingInfo', bondingInfo)
-      console.log('bondingInfo', bondingInfo.vTokenHolder.toBase58());
-
-    const owner = this.program.provider.wallet?.publicKey;
-
-    // Resolve or create asset user account;
     const userAssetHolder = await deriveAssociatedTokenAddress(owner, bondingInfo.assetMint);
 
     const { address: userVTokenHolder, ...resolveUserVTokenAccountInstrucitons } =
@@ -224,25 +213,46 @@ export class Bonding {
         amount
       );
 
-    const purchaseInstruction = this.program.instruction.purchaseWithLiquidity(
-      amount,
-      new u64(1e10),
-      {
-        accounts: {
-          bonding: this.config.addr,
-          bondingPda: bondingPda,
-          assetMint: bondingInfo.assetMint,
-          assetHolder: bondingInfo.assetHolder,
-          vTokenHolder: bondingInfo.vTokenHolder,
-          userAssetHolder: userAssetHolder,
-          userVTokenHolder: userVTokenHolder,
-          owner,
-          tokenAHolder: bondingInfo.lpInfo?.tokenAHolder,
-          tokenBHolder: bondingInfo.lpInfo?.tokenBHolder,
-          tokenProgram: TOKEN_PROGRAM_ID,
-        }
-      }
-    );
+    const purchaseInstruction =
+      !!bondingInfo.lpInfo ?
+        this.program.instruction.purchaseWithLiquidity(
+          amount,
+          new u64(1e10),
+          {
+            accounts: {
+              bonding: this.config.addr,
+              bondingPda: bondingPda,
+              assetMint: bondingInfo.assetMint,
+              assetHolder: bondingInfo.assetHolder,
+              vTokenHolder: bondingInfo.vTokenHolder,
+              userAssetHolder: userAssetHolder,
+              userVTokenHolder: userVTokenHolder,
+              owner,
+              tokenAHolder: bondingInfo.lpInfo?.tokenAHolder,
+              tokenBHolder: bondingInfo.lpInfo?.tokenBHolder,
+              tokenProgram: TOKEN_PROGRAM_ID,
+            }
+          }
+        )
+        :
+        this.program.instruction.purchaseWithStable(
+          amount,
+          new u64(1e10),
+          {
+            accounts: {
+              bonding: this.config.addr,
+              bondingPda: bondingPda,
+              assetMint: bondingInfo.assetMint,
+              assetHolder: bondingInfo.assetHolder,
+              vTokenHolder: bondingInfo.vTokenHolder,
+              userAssetHolder: userAssetHolder,
+              userVTokenHolder: userVTokenHolder,
+              owner,
+              tokenProgram: TOKEN_PROGRAM_ID,
+            }
+          }
+        )
+      ;
 
     return new TransactionEnvelope(
       this.program.provider as any,
@@ -256,8 +266,7 @@ export class Bonding {
     );
 
   }
-
-  async vestVToken(amount: u64): Promise<TransactionEnvelope> {
+  async vestVToken(): Promise<TransactionEnvelope> {
 
     const bondingInfo = await this.getBondingInfo();
 
@@ -275,8 +284,6 @@ export class Bonding {
       [Buffer.from(VESTING_SIGNER_SEED_PREFIX), vestingAddr.toBuffer()],
       this.vestingProgram.programId
     );
-
-    console.log('bondingInfo.vTokenMint', bondingInfo.vTokenMint.toBase58());
 
     const vestedHolder = await deriveAssociatedTokenAddress(vSigner, bondingInfo.vTokenMint);
     const userVTokenHolder = await deriveAssociatedTokenAddress(owner, bondingInfo.vTokenMint);
@@ -313,9 +320,7 @@ export class Bonding {
       }
     }));
 
-    console.log('amount', amount.toNumber())
-    vestingInstructions.push(this.vestingProgram.instruction.vest(
-      amount,
+    vestingInstructions.push(this.vestingProgram.instruction.vestAll(
       {
         accounts: {
           vesting: vestingAddr,
@@ -402,8 +407,9 @@ export class Bonding {
     return new TransactionEnvelope(
       this.program.provider as any,
       [
-        ...resolveUserTokenAccountInstrucitons.instructions,
         updateInstruction,
+
+        ...resolveUserTokenAccountInstrucitons.instructions,
         claimInstruction
       ],
       [
@@ -421,31 +427,31 @@ export class Bonding {
     claimableAmount: u64,
     updateTime: number //in seconds
   ): u64 {
-  
+
     // if (updateTime <= lastUpdatedTime) {
     //   throw Error('update time should gt lastUpdateTime');
     // }
-  
+
     //no more vested amount
     if (vestedHolderAmount.lte(ZERO_U64)) {
       return claimableAmount;
     }
-  
+
     // claimed all
     if (updateTime - lastVestTime > claimAllDuration) {
       return claimableAmount.add(vestedHolderAmount);
     }
-  
+
     const timeElapsed = updateTime - lastUpdatedTime;
-  
-    const newRemainedAmount = 
+
+    const newRemainedAmount =
       DecimalUtil.fromU64(vestedHolderAmount)
         .mul(
           DecimalUtil.fromNumber(Math.exp((-Math.LN2 * timeElapsed) / halfLifeDuration))
         );
-  
+
     const newClaimableAmount = DecimalUtil.fromU64(vestedHolderAmount).sub(newRemainedAmount);
-  
+
     return claimableAmount.add(DecimalUtil.toU64(newClaimableAmount));
   }
 
