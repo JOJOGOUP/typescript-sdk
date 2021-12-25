@@ -19,7 +19,7 @@ import {
 
 import { PublicKey } from '@solana/web3.js';
 
-import idl from './idl.json';
+import idl from './staking.json';
 import { Idl, Program } from '@project-serum/anchor';
 import { TransactionEnvelope } from '@saberhq/solana-contrib';
 
@@ -80,7 +80,7 @@ export class Staking {
     const stakeInstruction = this.program.instruction.stake(amount, {
       accounts: {
         staking: STAKING_CONFIG,
-        authority: authority,
+        stakingPda: authority,
         stakeTokenMint: stakeConfigInfo.sTokenMint,
         tokenHolder: stakedHolder,
         userTokenHolder,

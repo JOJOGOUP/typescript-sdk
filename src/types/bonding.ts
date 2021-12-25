@@ -12,23 +12,43 @@ export type LPInfo = {
 export type BondingConfig = {
   addr: PublicKey;
   vestConfig: PublicKey;
+  staking: PublicKey;
 }
+
+// export type BondingInfo = {
+//   address: PublicKey;
+//   assetMint: PublicKey;
+//   assetMintDecimals: number;
+//   assetHolder: PublicKey;
+//   assetHolderAmount: Decimal;
+//   vTokenHolder: PublicKey;
+//   vTokenMint: PublicKey;
+//   lpInfo: LPInfo;
+//   lastDecay: number;
+//   decayFactor: number;
+//   controlVariable: number;
+//   totalDebt: u64;
+//   bondingSupply: u64;
+// }
 
 export type BondingInfo = {
   address: PublicKey;
-  assetMint: PublicKey;
-  assetMintDecimals: number;
-  assetHolder: PublicKey;
-  assetHolderAmount: Decimal;
-  vTokenHolder: PublicKey;
-  vTokenMint: PublicKey;
-  lpInfo: LPInfo;
+  bondingSupply: u64;
   lastDecay: number;
   decayFactor: number;
   controlVariable: number;
   totalDebt: u64;
-  bondingSupply: u64;
+  maxDebt: u64;
+  maxPayout: u64;
+  minPrice: u64,
+
+  payoutHolder: PublicKey,
+  payoutTokenMint: PublicKey
+  depositHolder: PublicKey
+  depositTokenMint: PublicKey
+  depositHolderAmount: Decimal;
 }
+
 
 export type VestConfigInfo = {
   vestMint: PublicKey;
