@@ -33,12 +33,16 @@ exports.mainnetPools = [
     }
 ];
 exports.devnetPools = [
-    {
-        pair: 'SOL_USDC',
-        addr: new web3_js_1.PublicKey('6VznpsWwaJjDiWF7A6xZosKHb8AbtG29wrJbK5ysHRfg')
-    },
+    // {
+    //   pair: 'SOL_USDC',
+    //   addr: new PublicKey('6VznpsWwaJjDiWF7A6xZosKHb8AbtG29wrJbK5ysHRfg')
+    // },
+    // {
+    //   pair: 'PNG_USDC',
+    //   addr: new PublicKey('3HdXX7jhbq7EF2fpaB7iPt8J8N5MwTYii6FYhwySakg7')
+    // }
     {
         pair: 'PNG_USDC',
-        addr: new web3_js_1.PublicKey('3HdXX7jhbq7EF2fpaB7iPt8J8N5MwTYii6FYhwySakg7')
+        addr: new web3_js_1.PublicKey('CwZYvh69ZbmG5nf7Day5qoi1eaDE6mN6MuY6hgkikCwS')
     }
 ];
