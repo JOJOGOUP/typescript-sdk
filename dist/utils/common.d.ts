@@ -1,0 +1,14 @@
+import { PublicKey } from '@solana/web3.js';
+import { PoolInfo, Token } from '../types';
+import { u64 } from '@solana/spl-token';
+export declare const ZERO_U64: u64;
+export declare const ONE_U64: u64;
+export declare const ONE_HUNDRED_U64: u64;
+export declare const ONE_THOUSAND_U64: u64;
+export declare function isNumber(value: any): boolean;
+export declare function beautify(str?: string): string;
+export declare function toFixed(value?: number, fixed?: number, force?: boolean): string;
+export declare function getTokenByMint(mint: string, tokens: Token[]): Token | undefined;
+export declare function getTokenBySymbol(symbol: string, tokens: Token[]): Token | undefined;
+export declare function toShortAddr(pubkey: string | PublicKey, length?: number): string;
+export declare const getPairByPoolInfo: (info: PoolInfo) => string;
