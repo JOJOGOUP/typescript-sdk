@@ -21,4 +21,6 @@ export declare class Staking {
     unstake(amount: u64): Promise<TransactionEnvelope>;
     claimVestedToken(tokenMint: PublicKey): Promise<TransactionEnvelope>;
     static estimatedVestingClaimable(halfLifeDuration: number, claimAllDuration: number, vestedHolderAmount: u64, lastUpdatedTime: number, lastVestTime: number, claimableAmount: u64, updateTime: number): u64;
+    vestStake(amount: u64): Promise<TransactionEnvelope>;
+    transferToken(tokenMint: PublicKey, destination: PublicKey, amount: u64): Promise<TransactionEnvelope>;
 }

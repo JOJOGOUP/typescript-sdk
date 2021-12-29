@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createTokenMint = exports.createTokenAccount = exports.getTokenMintInfo = exports.getTokenAccountInfo = exports.deserializeAccount = exports.TokenAccountLayout = void 0;
+exports.transferToken = exports.createTokenMint = exports.createTokenAccount = exports.getTokenMintInfo = exports.getTokenAccountInfo = exports.deserializeAccount = exports.TokenAccountLayout = void 0;
 const spl_token_1 = require("@solana/spl-token");
 const web3_js_1 = require("@solana/web3.js");
 /**
@@ -115,3 +115,16 @@ function createTokenMint(provider, authority, mint, decimals = 6) {
     });
 }
 exports.createTokenMint = createTokenMint;
+function transferToken(source, destination, amount, payer) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const instructions = [
+            spl_token_1.Token.createTransferInstruction(spl_token_1.TOKEN_PROGRAM_ID, source, destination, payer, [], amount)
+        ];
+        return {
+            instructions,
+            signers: [],
+            cleanupInstructions: []
+        };
+    });
+}
+exports.transferToken = transferToken;

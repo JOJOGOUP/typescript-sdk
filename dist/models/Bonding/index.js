@@ -116,5 +116,150 @@ class Bonding {
             ]);
         });
     }
+    // async purchaseToken(amount: u64): Promise<TransactionEnvelope> {
+    //   const owner = this.program.provider.wallet?.publicKey;
+    //   const [bondingInfo, vestConfigInfo] = await Promise.all([
+    //     this.getBondingInfo(),
+    //     this.getVestConfigInfo()
+    //   ]);
+    //   const [bondingPda] = await PublicKey.findProgramAddress(
+    //     [Buffer.from(BONDING_SEED_PREFIX), this.config.address.toBuffer()],
+    //     this.program.programId
+    //   );
+    //   const vestingAddr = await this.getUserVestingAddress();
+    //   const [vSigner, vNonce] = await PublicKey.findProgramAddress(
+    //     [Buffer.from(VESTING_SIGNER_SEED_PREFIX), vestingAddr.toBuffer()],
+    //     this.program.programId
+    //   );
+    //   const [vestedHolder, userAssetHolder] = await Promise.all([
+    //     deriveAssociatedTokenAddress(vSigner, vestConfigInfo.vestMint),
+    //     deriveAssociatedTokenAddress(owner, bondingInfo.assetMint)
+    //   ]);
+    //   const { address: userVTokenHolder, ...resolveUserVTokenAccountInstrucitons } =
+    //     await resolveOrCreateAssociatedTokenAddress(
+    //       this.program.provider.connection,
+    //       owner,
+    //       vestConfigInfo.vestMint,
+    //       amount
+    //     );
+    //   const instructions = [];
+    //   const userVestingAddress = await this.getUserVestingAddress();
+    //   const userVesting = await this.getVestingInfo(userVestingAddress);
+    //   if (userVesting === null) {
+    //     instructions.push(
+    //       this.vestingProgram.instruction.initVesting(
+    //         new u64(vNonce),
+    //         {
+    //           accounts: {
+    //             vestConfig: this.config.vestConfig,
+    //             vesting: vestingAddr,
+    //             vestMint: vestConfigInfo.vestMint,
+    //             vestedHolder: vestedHolder,
+    //             vestingSigner: vSigner,
+    //             payer: owner,
+    //             rent: SYSVAR_RENT_PUBKEY,
+    //             clock: SYSVAR_CLOCK_PUBKEY,
+    //             systemProgram: SystemProgram.programId,
+    //             tokenProgram: TOKEN_PROGRAM_ID,
+    //             associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+    //           }
+    //         }
+    //       )
+    //     );
+    //   }
+    //   instructions.push(
+    //     !!bondingInfo.lpInfo ?
+    //       this.program.instruction.purchaseWithLiquidity(
+    //         amount,
+    //         new u64(1e10),
+    //         {
+    //           accounts: {
+    //             bonding: this.config.address,
+    //             bondingPda: bondingPda,
+    //             assetMint: bondingInfo.assetMint,
+    //             assetHolder: bondingInfo.assetHolder,
+    //             vTokenHolder: bondingInfo.vTokenHolder,
+    //             userAssetHolder,
+    //             userVTokenHolder,
+    //             owner,
+    //             tokenAHolder: bondingInfo.lpInfo?.tokenAHolder,
+    //             tokenBHolder: bondingInfo.lpInfo?.tokenBHolder,
+    //             tokenProgram: TOKEN_PROGRAM_ID
+    //           }
+    //         }
+    //       ) :
+    //       this.program.instruction.purchaseWithStable(
+    //         amount,
+    //         new u64(1e10),
+    //         {
+    //           accounts: {
+    //             bonding: this.config.address,
+    //             bondingPda: bondingPda,
+    //             assetMint: bondingInfo.assetMint,
+    //             assetHolder: bondingInfo.assetHolder,
+    //             vTokenHolder: bondingInfo.vTokenHolder,
+    //             userAssetHolder,
+    //             userVTokenHolder,
+    //             owner,
+    //             tokenProgram: TOKEN_PROGRAM_ID
+    //           }
+    //         }
+    //       )
+    //   );
+    //   return new TransactionEnvelope(
+    //     this.program.provider as any,
+    //     [
+    //       ...resolveUserVTokenAccountInstrucitons.instructions,
+    //       ...instructions
+    //     ],
+    //     [
+    //       ...resolveUserVTokenAccountInstrucitons.signers
+    //     ]
+    //   );
+    // }
+    initBonding(depositTokenMint, payoutTokenMint, bondingKP, controlVariable, decayFactor, bondingSupply, maxDebt, minPrice, maxPayout) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            const owner = (_a = this.program.provider.wallet) === null || _a === void 0 ? void 0 : _a.publicKey;
+            // const bondingKP = Keypair.generate();
+            const [bondingPda, nonce] = yield web3_js_1.PublicKey.findProgramAddress([Buffer.from(BONDING_SEED_PREFIX), bondingKP.publicKey.toBuffer()], this.program.programId);
+            const payoutHolder = yield (0, utils_1.deriveAssociatedTokenAddress)(bondingPda, payoutTokenMint);
+            const _b = yield (0, utils_1.resolveOrCreateAssociatedTokenAddress)(this.program.provider.connection, owner, //TODO bondingPda occur error
+            depositTokenMint), { address: depositHolder } = _b, resolveHolderInstrucitons = __rest(_b, ["address"]);
+            // const controlVariable = 480;
+            // const decayFactor = 86400;
+            // const maxDebt = 5000000000;
+            // const bondingSupply = 1e11;
+            // const maxPayout = 500;
+            // // bondingSupply / 1e6 * maxPayout / 100000
+            // const minPrice = 5000;
+            const initInstruction = this.program.instruction.initBonding(new anchor_1.BN(nonce), new anchor_1.BN(controlVariable), new anchor_1.BN(decayFactor), new anchor_1.BN(bondingSupply), new anchor_1.BN(maxPayout), new anchor_1.BN(maxDebt), new anchor_1.BN(minPrice), {
+                accounts: {
+                    bonding: bondingKP.publicKey,
+                    bondingPda: bondingPda,
+                    payoutHolder: payoutHolder,
+                    payoutTokenMint: payoutTokenMint,
+                    depositTokenMint: depositTokenMint,
+                    depositHolder: depositHolder,
+                    payer: owner,
+                    rent: web3_js_1.SYSVAR_RENT_PUBKEY,
+                    systemProgram: web3_js_1.SystemProgram.programId,
+                    tokenProgram: spl_token_1.TOKEN_PROGRAM_ID,
+                    associatedTokenProgram: spl_token_1.ASSOCIATED_TOKEN_PROGRAM_ID
+                },
+            });
+            const tmpTransaction = new solana_contrib_1.TransactionEnvelope(this.program.provider, [
+                ...resolveHolderInstrucitons.instructions,
+                initInstruction
+            ], [
+                ...resolveHolderInstrucitons.signers,
+                bondingKP
+            ]);
+            return {
+                tmpTransaction,
+                payoutHolder
+            };
+        });
+    }
 }
 exports.Bonding = Bonding;

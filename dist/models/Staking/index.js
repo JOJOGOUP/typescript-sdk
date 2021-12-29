@@ -222,7 +222,7 @@ class Staking {
             const stakedHolder = yield (0, utils_1.deriveAssociatedTokenAddress)(stakingPda, stakingInfo.tokenMint);
             const userTokenHolder = yield (0, utils_1.deriveAssociatedTokenAddress)(owner, stakingInfo.tokenMint);
             const _b = yield (0, utils_1.resolveOrCreateAssociatedTokenAddress)(this.program.provider.connection, owner, stakingInfo.sTokenMint), { address: userSTokenHolder } = _b, resolveUserSTokenAccountInstrucitons = __rest(_b, ["address"]);
-            const stakeInstruction = this.program.instruction.stackAll({
+            const stakeInstruction = this.program.instruction.stakeAll({
                 accounts: {
                     staking: this.config.address,
                     stakingPda,
@@ -374,6 +374,42 @@ class Staking {
             .mul(utils_1.DecimalUtil.fromNumber(Math.exp((-Math.LN2 * timeElapsed) / halfLifeDuration)));
         const newClaimableAmount = utils_1.DecimalUtil.fromU64(vestedHolderAmount).sub(newRemainedAmount);
         return claimableAmount.add(utils_1.DecimalUtil.toU64(newClaimableAmount));
+    }
+    vestStake(amount) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            const owner = (_a = this.program.provider.wallet) === null || _a === void 0 ? void 0 : _a.publicKey;
+            const vestConfig = yield this.getVestConfigInfo();
+            const [vestingPda, nonce] = yield web3_js_1.PublicKey.findProgramAddress([Buffer.from(VESTING_CONFIG_SIGNER_SEED_PREFIX), this.config.vestConfig.toBuffer()], this.vestingProgram.programId);
+            const userClaimableHolder = yield (0, utils_1.deriveAssociatedTokenAddress)(owner, vestConfig.claimableMint);
+            const userVestHolder = yield (0, utils_1.deriveAssociatedTokenAddress)(owner, vestConfig.vestMint);
+            const vestStakeInstruction = this.vestingProgram.instruction.stake(amount, {
+                accounts: {
+                    vestConfig: this.config.vestConfig,
+                    vestConfigSigner: vestingPda,
+                    vestMint: vestConfig === null || vestConfig === void 0 ? void 0 : vestConfig.vestMint,
+                    claimableHolder: vestConfig === null || vestConfig === void 0 ? void 0 : vestConfig.claimableHolder,
+                    userClaimableHolder: userClaimableHolder,
+                    userVestHolder: userVestHolder,
+                    owner,
+                    tokenProgram: spl_token_1.TOKEN_PROGRAM_ID
+                }
+            });
+            return new solana_contrib_1.TransactionEnvelope(this.vestingProgram.provider, [
+                vestStakeInstruction
+            ], []);
+        });
+    }
+    transferToken(tokenMint, destination, amount) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            const payer = (_a = this.program.provider.wallet) === null || _a === void 0 ? void 0 : _a.publicKey;
+            const source = yield (0, utils_1.deriveAssociatedTokenAddress)(payer, tokenMint);
+            const instructions = yield (0, utils_1.transferToken)(source, destination, amount, payer);
+            return new solana_contrib_1.TransactionEnvelope(this.vestingProgram.provider, [
+                ...instructions.instructions
+            ], []);
+        });
     }
 }
 exports.Staking = Staking;

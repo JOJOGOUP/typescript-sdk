@@ -1,5 +1,5 @@
-import { 
-  BondingInfo, 
+import {
+  BondingInfo,
   BondingConfig,
   VestConfigInfo,
   StakingInfo,
@@ -23,7 +23,8 @@ import {
   PublicKey,
   SYSVAR_RENT_PUBKEY,
   SYSVAR_CLOCK_PUBKEY,
-  SystemProgram
+  SystemProgram,
+  Keypair
 } from '@solana/web3.js';
 
 import {
@@ -34,7 +35,7 @@ import {
 
 import idl from './idl.json';
 
-import { Idl, Program, Provider } from '@project-serum/anchor';
+import { BN, Idl, Program, Provider } from '@project-serum/anchor';
 import { TransactionEnvelope } from '@saberhq/solana-contrib';
 import Decimal from 'decimal.js';
 
@@ -66,7 +67,7 @@ export class Bonding {
     } = await this.program.account.bonding.fetch(this.config.address);
 
     const depositHolderInfo = await getTokenAccountInfo(this.program.provider as any, depositHolder);
-   
+
     return {
       address: this.config.address,
       payoutHolder,
@@ -109,24 +110,24 @@ export class Bonding {
   }
 
   calcPayout(
-    bondingInfo: BondingInfo, 
-    payoutTokenDecimals: number, 
-    depositTokenDecimals: number, 
+    bondingInfo: BondingInfo,
+    payoutTokenDecimals: number,
+    depositTokenDecimals: number,
     amount = 1
   ): PayoutInfo {
 
     const valuation = this.valueOf(
-      DecimalUtil.toU64(new Decimal(amount), depositTokenDecimals), 
-      payoutTokenDecimals, 
+      DecimalUtil.toU64(new Decimal(amount), depositTokenDecimals),
+      payoutTokenDecimals,
       depositTokenDecimals
     );
-    
+
     const price = this.price(bondingInfo, payoutTokenDecimals);
 
     const payout = valuation.mul(new u64(Math.pow(10, 5))).div(price);
 
     return {
-      payoutAmount: payout, 
+      payoutAmount: payout,
       internalPrice: price
     }
 
@@ -209,7 +210,7 @@ export class Bonding {
   //     deriveAssociatedTokenAddress(vSigner, vestConfigInfo.vestMint),
   //     deriveAssociatedTokenAddress(owner, bondingInfo.assetMint)
   //   ]);
-   
+
   //   const { address: userVTokenHolder, ...resolveUserVTokenAccountInstrucitons } =
   //     await resolveOrCreateAssociatedTokenAddress(
   //       this.program.provider.connection,
@@ -299,5 +300,86 @@ export class Bonding {
 
   // }
 
-  
+  async initBonding(
+    depositTokenMint: PublicKey,
+    payoutTokenMint: PublicKey,
+    bondingKP: Keypair,
+    controlVariable: string,
+    decayFactor: string,
+    bondingSupply: string,
+    maxDebt: string,
+    minPrice: string,
+    maxPayout: string,
+  ) {
+
+    const owner = this.program.provider.wallet?.publicKey;
+
+    // const bondingKP = Keypair.generate();
+    const [bondingPda, nonce] = await PublicKey.findProgramAddress(
+      [Buffer.from(BONDING_SEED_PREFIX), bondingKP.publicKey.toBuffer()],
+      this.program.programId
+    );
+
+    const payoutHolder = await deriveAssociatedTokenAddress(bondingPda, payoutTokenMint);
+
+    const { address: depositHolder, ...resolveHolderInstrucitons } =
+      await resolveOrCreateAssociatedTokenAddress(
+        this.program.provider.connection,
+        owner, //TODO bondingPda occur error
+        depositTokenMint
+      );
+
+    // const controlVariable = 480;
+    // const decayFactor = 86400;
+    // const maxDebt = 5000000000;
+    // const bondingSupply = 1e11;
+
+    // const maxPayout = 500;
+    // // bondingSupply / 1e6 * maxPayout / 100000
+    // const minPrice = 5000;
+
+    const initInstruction = this.program.instruction.initBonding(
+      new BN(nonce),
+      new BN(controlVariable),
+      new BN(decayFactor),
+      new BN(bondingSupply),
+      new BN(maxPayout),
+      new BN(maxDebt),
+      new BN(minPrice),
+      {
+        accounts: {
+          bonding: bondingKP.publicKey,
+          bondingPda: bondingPda,
+          payoutHolder: payoutHolder,
+          payoutTokenMint: payoutTokenMint,
+          depositTokenMint: depositTokenMint,
+          depositHolder: depositHolder,
+
+          payer: owner,
+          rent: SYSVAR_RENT_PUBKEY,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID
+        },
+      }
+    );
+
+    const tmpTransaction = new TransactionEnvelope(
+      this.program.provider as any,
+      [
+        ...resolveHolderInstrucitons.instructions,
+        initInstruction
+      ],
+      [
+        ...resolveHolderInstrucitons.signers,
+        bondingKP
+      ]
+    );
+    return {
+      tmpTransaction,
+      payoutHolder
+    }
+  }
+
+
 }

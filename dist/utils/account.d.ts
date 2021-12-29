@@ -2,7 +2,7 @@
 import type { Layout } from '@solana/buffer-layout';
 import type { AccountInfo } from '@solana/spl-token';
 import type { Provider } from '@saberhq/solana-contrib';
-import { AccountInfo as TokenAccountInfo, MintInfo } from '@solana/spl-token';
+import { AccountInfo as TokenAccountInfo, u64, MintInfo } from '@solana/spl-token';
 import { PublicKey, Signer } from '@solana/web3.js';
 import { Instruction } from '../types';
 /**
@@ -45,3 +45,4 @@ export declare const createTokenAccount: ({ provider, mint, owner, payer, accoun
     accountSigner?: Signer | undefined;
 }) => Promise<ResolvedTokenAccountInstruction>;
 export declare function createTokenMint(provider: Provider, authority: PublicKey, mint: PublicKey, decimals?: number): Promise<Instruction>;
+export declare function transferToken(source: PublicKey, destination: PublicKey, amount: u64, payer: PublicKey): Promise<Instruction>;
