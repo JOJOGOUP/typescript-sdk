@@ -5,8 +5,8 @@ const web3_js_1 = require("@solana/web3.js");
 exports.mainnetStakings = [];
 exports.devnetStakings = [
     {
-        address: new web3_js_1.PublicKey('EFes66miKQkoSHsYwFBiKTaSKvX9Cd8CQgCSqLrZf38'),
-        vestConfig: new web3_js_1.PublicKey('HbrVWaVLb98ozeSiC69tt9T7TXYB8j2qyCke6qqEMC97'),
-        payoutAsset: new web3_js_1.PublicKey('PNGXZxRnRwixr7jrMSctAErSTF5SRnPQcuakkWRHe4h')
+        address: new web3_js_1.PublicKey('3sHcGhf9YN9DTRvHM33s7T4ZvqtSTAn1mLASHyg4mufs'),
+        vestConfig: new web3_js_1.PublicKey('B4nJVtNgqZAjWMy5Twy1JbXYgsX5K4LjKvUaZT6SrvCm'),
+        payoutAsset: new web3_js_1.PublicKey('PNGmGQ7SwKTHHPCRgnznYbyTPkrAxcAPLqpgNDYNP1g')
     }
 ];
